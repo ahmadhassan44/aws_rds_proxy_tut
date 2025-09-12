@@ -1,4 +1,4 @@
-package main
+package patterns
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func randomBoringStuff(msg string) <-chan string {
+func RandomBoringStuff(msg string) <-chan string {
 	var words = []string{
 		"apple", "banana", "cherry", "dog", "elephant",
 		"forest", "guitar", "house", "island", "jungle",
