@@ -1,23 +1,43 @@
 package main
 
 import (
-	"fmt"
-	"math/rand"
 	"time"
 
-	"github.com/ahmadhassan44/aws_rds_proxy_tut/patterns"
+	"github.com/google/uuid"
 )
 
+type JobStatus int
+
+const (
+	Pending JobStatus = iota
+	Running
+	Completed
+	Failed
+	Rejected
+)
+
+type JobQueue struct {
+	// Mut  sync.Mutex
+	// Jobs map[uuid.UUID]Job
+}
+
+// func NewJobQueue(maxConcurrentJobs int) *JobQueue {
+// 	// return &JobQueue{
+// 	// 	Jobs: make([]Job, 0),
+// 	// }
+// }
+
+type Job struct {
+	ID        uuid.UUID
+	ClientId  uuid.UUID
+	Data      string
+	Status    JobStatus
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Result    interface{}
+	Error     error
+}
+
 func main() {
-	ch := make(chan patterns.Result)
-	rand.Seed(time.Now().UnixNano())
-	start := time.Now()
-	go func() { ch <- patterns.Web("golang") }()
-	go func() { ch <- patterns.Image("golang") }()
-	go func() { ch <- patterns.Video("golang") }()
-	for i := 0; i < 3; i++ {
-		fmt.Println(<-ch)
-	}
-	elapsed := time.Since(start)
-	fmt.Println(elapsed)
+
 }
