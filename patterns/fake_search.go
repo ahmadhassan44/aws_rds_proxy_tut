@@ -21,7 +21,7 @@ type Search func(query string) Result
 
 func fakeSearch(kind string) Search {
 	return func(query string) Result {
-		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
+		time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
 		return Result{
 			kind:   kind,
 			query:  query,

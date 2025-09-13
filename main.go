@@ -9,14 +9,15 @@ import (
 )
 
 func main() {
+	ch := make(chan patterns.Result)
 	rand.Seed(time.Now().UnixNano())
 	start := time.Now()
-	web := patterns.Web("golang")
-	image := patterns.Image("golang")
-	video := patterns.Video("golang")
+	go func() { ch <- patterns.Web("golang") }()
+	go func() { ch <- patterns.Image("golang") }()
+	go func() { ch <- patterns.Video("golang") }()
+	for i := 0; i < 3; i++ {
+		fmt.Println(<-ch)
+	}
 	elapsed := time.Since(start)
-	fmt.Println(web)
-	fmt.Println(image)
-	fmt.Println(video)
 	fmt.Println(elapsed)
 }
