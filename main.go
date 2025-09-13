@@ -2,22 +2,17 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/ahmadhassan44/aws_rds_proxy_tut/patterns"
 )
 
 func main() {
-
-	ch := patterns.IDontWaitLongForBoringStuff(patterns.RandomBoringStuff("Worker 1"), patterns.RandomBoringStuff("Worker 2"), 600*time.Millisecond)
-	fmt.Println("Im listening")
-	for i := 0; ; i++ {
-		msg := <-ch
-		if msg == "Both of them are too boring" {
-			fmt.Println("Both of them are too boring")
-			break
-		}
-		fmt.Println(msg)
-	}
-	// fmt.Println("You are boring! I am leaving")
+	rand.Seed(time.Now().UnixNano())
+	start := time.Now()
+	results := patterns.Web("golang")
+	elapsed := time.Since(start)
+	fmt.Println(results)
+	fmt.Println(elapsed)
 }
