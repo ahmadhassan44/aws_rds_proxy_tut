@@ -11,8 +11,12 @@ import (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	start := time.Now()
-	results := patterns.Web("golang")
+	web := patterns.Web("golang")
+	image := patterns.Image("golang")
+	video := patterns.Video("golang")
 	elapsed := time.Since(start)
-	fmt.Println(results)
+	fmt.Println(web)
+	fmt.Println(image)
+	fmt.Println(video)
 	fmt.Println(elapsed)
 }
