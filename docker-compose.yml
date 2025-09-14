@@ -1,0 +1,7 @@
+services:
+      server:
+        container_name: go_api
+        build: .
+        restart: unless-stopped
+        ports : 
+          - "3000:3000"
