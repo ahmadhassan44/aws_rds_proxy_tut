@@ -23,14 +23,14 @@ const (
 )
 
 type JobQueue struct {
-	maxConcurrency int
-	currentRunning int
-	jobs           map[uuid.UUID]*Job
-	jobsChan       chan uuid.UUID
-	mu             sync.RWMutex
-	ctx            context.Context
-	cancel         context.CancelFunc
-	wg             sync.WaitGroup
+	maxConcurrency   int
+	currentScheduled int
+	jobs             map[uuid.UUID]*Job
+	jobsChan         chan uuid.UUID
+	mu               sync.RWMutex
+	ctx              context.Context
+	cancel           context.CancelFunc
+	wg               sync.WaitGroup
 }
 
 type Job struct {
@@ -72,12 +72,12 @@ func NewJobQueue(maxConcurrentJobs int) *JobQueue {
 	jq := &JobQueue{
 		maxConcurrency: maxConcurrentJobs,
 		jobs:           make(map[uuid.UUID]*Job),
-		jobsChan:       make(chan uuid.UUID, maxConcurrentJobs),
+		jobsChan:       make(chan uuid.UUID, 1000),
 		ctx:            ctx,
 		cancel:         cancel,
 	}
 
-	for range maxConcurrentJobs {
+	for i := 0; i < maxConcurrentJobs; i++ {
 		jq.wg.Add(1)
 		go jq.worker()
 	}
@@ -86,6 +86,13 @@ func NewJobQueue(maxConcurrentJobs int) *JobQueue {
 }
 
 func (jq *JobQueue) TrySchedule(clientId uuid.UUID, data string) (*Job, error) {
+	jq.mu.Lock()
+	defer jq.mu.Unlock()
+
+	if jq.currentScheduled >= jq.maxConcurrency {
+		return nil, errors.New("job queue at capacity")
+	}
+
 	job := &Job{
 		ID:        uuid.New(),
 		ClientId:  clientId,
@@ -95,21 +102,17 @@ func (jq *JobQueue) TrySchedule(clientId uuid.UUID, data string) (*Job, error) {
 		UpdatedAt: time.Now(),
 	}
 
-	select {
-	case jq.jobsChan <- job.ID:
-		jq.mu.Lock()
-		jq.jobs[job.ID] = job
-		jq.mu.Unlock()
-		return job, nil
-	default:
-		return nil, errors.New("job queue at capacity")
-	}
+	jq.jobs[job.ID] = job
+	jq.currentScheduled++
+	jq.jobsChan <- job.ID
+
+	return job, nil
 }
 
 func (jq *JobQueue) GetCapacity() (current, max int) {
 	jq.mu.RLock()
 	defer jq.mu.RUnlock()
-	return jq.currentRunning, jq.maxConcurrency
+	return jq.currentScheduled, jq.maxConcurrency
 }
 
 func (jq *JobQueue) GetJob(jobID uuid.UUID) (*Job, bool) {
@@ -141,7 +144,6 @@ func (jq *JobQueue) processJob(jobID uuid.UUID) {
 	}
 	job.Status = Running
 	job.UpdatedAt = time.Now()
-	jq.currentRunning++
 	jq.mu.Unlock()
 
 	result, err := jq.executeJob(job)
@@ -155,7 +157,7 @@ func (jq *JobQueue) processJob(jobID uuid.UUID) {
 		job.Result = result
 	}
 	job.UpdatedAt = time.Now()
-	jq.currentRunning--
+	jq.currentScheduled--
 	jq.mu.Unlock()
 }
 
@@ -285,7 +287,7 @@ func (s *Server) Shutdown() {
 }
 
 func main() {
-	server := NewServer(1)
+	server := NewServer(3)
 	defer server.Shutdown()
 
 	server.Start("3000")
