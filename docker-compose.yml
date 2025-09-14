@@ -3,5 +3,11 @@ services:
         container_name: go_api
         build: .
         restart: unless-stopped
+        healthcheck:
+          test:  ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+          interval: 1s
+          timeout: 10s
+          retries: 3
+          start_period: 10s
         ports : 
           - "3000:3000"

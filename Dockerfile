@@ -7,7 +7,8 @@ RUN make build
 
 
 FROM alpine:latest
+RUN apk --no-cache add curl
 COPY --from=builder /app/bin/go_api /app/bin/go_api
 WORKDIR /app
 EXPOSE 3000
-CMD [ "./bin/go_api" ]
+CMD ["./bin/go_api"]
